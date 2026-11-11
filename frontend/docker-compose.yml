@@ -1,0 +1,36 @@
+# =============================================================================
+# Docker Compose для локального запуска Frontend
+# =============================================================================
+#
+# Использование:
+#   - Запуск: docker-compose up -d
+#   - Остановка: docker-compose down
+#   - Пересборка: docker-compose up -d --build
+#
+# После запуска приложение доступно по адресу: http://localhost
+# =============================================================================
+
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: social-network-frontend
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - frontend-network
+
+# Опционально: сеть для связи с бэкенд сервисами
+networks:
+  frontend-network:
+    driver: bridge

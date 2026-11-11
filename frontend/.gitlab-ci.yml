@@ -1,0 +1,95 @@
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+
+stages:
+  - build
+  - docker
+  - deploy
+
+build:
+  stage: build
+  tags:
+    - students
+  image: node:18-alpine
+  before_script:
+    - echo "Node version:" && node --version
+    - echo "NPM version:" && npm --version
+  script:
+    - echo "📦 Установка зависимостей..."
+    - npm ci --prefer-offline
+    - echo "🔍 Проверка кода линтером..."
+    - npm run lint
+    - echo "🔨 Сборка приложения..."
+    - npm run build
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 week
+
+
+docker-build-push:
+  stage: docker
+
+  image:
+    name: gcr.io/kaniko-project/executor:v1.9.0-debug
+    entrypoint: [""]
+
+  tags:
+    - students
+
+  script:
+    - mkdir -p /kaniko/.docker
+
+    - echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"auth\":\"$(printf '%s:%s' "$DOCKERHUB_USER" "$DOCKERHUB_TOKEN" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
+
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "${DOCKERHUB_USER}/social-network-frontend:latest"
+
+
+deploy:
+  stage: deploy
+
+  image: alpine:latest
+
+  tags:
+    - students
+
+  before_script:
+    - apk add --no-cache openssh-client curl
+
+    - eval "$(ssh-agent -s)"
+
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+
+    - ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+
+  script:
+    - |
+      ssh "$SERVER_USER@$SERVER_HOST" '
+        cd /home/skill_user/frontend &&
+        docker compose pull &&
+        docker compose up -d
+      '
+
+    - |
+      echo "Waiting for frontend..."
+      
+      for i in $(seq 1 30); do
+        if curl -sf "http://$SERVER_HOST"; then
+          echo "Frontend is UP"
+          exit 0
+        fi
+      
+        echo "Frontend is not ready yet ($i/30)"
+        sleep 3
+      done
+      
+      echo "ERROR: Frontend did not become UP"
+      exit 1
