@@ -1,0 +1,26 @@
+services:
+  dialog-service:
+    image: dialog-service:latest
+    container_name: dialog-service
+    restart: unless-stopped
+    ports:
+      - "8089:8089"
+    environment:
+      DB_URL: jdbc:postgresql://213.217.1.240:5432/dialog_db
+      DB_USER: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      EUREKA_URL: http://213.217.1.240:8761/eureka/
+      AUTH_SERVICE_URL: http://213.217.1.240:8090
+      KAFKA_BOOTSTRAP_SERVERS: 213.217.1.240:9092
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:8089/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - microservices-net
+
+networks:
+  microservices-net:
+    external: true

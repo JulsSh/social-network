@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: dialog_postgres
+    environment:
+      POSTGRES_DB: dialog_db
+      POSTGRES_USER: dialoguser
+      POSTGRES_PASSWORD: dialogpass
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:

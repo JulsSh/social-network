@@ -1,0 +1,6 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/001-create-dialogs.yaml
+  - include:
+      file: db/changelog/002-create-messages.yaml
+

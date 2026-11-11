@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>MC-DIALOG — WebSocket test (auth)</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<style>
+  body { font-family: -apple-system, sans-serif; max-width: 860px; margin: 30px auto; padding: 0 16px; }
+  fieldset { border: 1px solid #ccc; border-radius: 6px; margin-bottom: 16px; padding: 12px 16px; }
+  legend { font-weight: 600; padding: 0 6px; }
+  label { display: block; margin: 8px 0 3px; font-size: 13px; color: #444; }
+  input, textarea { width: 100%; padding: 7px; box-sizing: border-box; font-family: monospace; font-size: 13px; }
+  textarea { height: 70px; resize: vertical; }
+  button { padding: 8px 18px; margin-right: 8px; font-size: 14px; cursor: pointer; }
+  #log { background: #1e1e1e; color: #d4d4d4; padding: 12px; height: 300px; overflow-y: auto;
+         font-family: monospace; font-size: 12px; white-space: pre-wrap; border-radius: 6px; }
+  .status { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 12px; }
+  .off { background: #fdd; color: #900; }
+  .on  { background: #dfd; color: #060; }
+</style>
+</head>
+<body>
+
+<h2>MC-DIALOG — WebSocket с аутентификацией</h2>
+<p>Статус: <span id="status" class="status off">не подключено</span></p>
+
+<fieldset>
+  <legend>Подключение</legend>
+  <label>Адрес WebSocket</label>
+  <input id="wsUrl" value="ws://localhost:8089/ws">
+
+  <label>Токен (без слова Bearer)</label>
+  <textarea id="token" placeholder="eyJhbGciOiJIUzI1NiJ9..."></textarea>
+  <br><br>
+  <button onclick="connect()">Подключиться</button>
+  <button onclick="disconnect()">Отключиться</button>
+</fieldset>
+
+<fieldset>
+  <legend>Отправка сообщения</legend>
+  <label>UUID получателя</label>
+  <input id="recipientId" placeholder="UUID собеседника">
+
+  <label>Текст</label>
+  <input id="text" value="привет" onkeydown="if(event.key==='Enter') send()">
+  <br><br>
+  <button onclick="send()">Отправить</button>
+</fieldset>
+
+<div id="log"></div>
+
+<script>
+let client = null;
+
+function log(msg) {
+  const el = document.getElementById('log');
+  el.textContent += '[' + new Date().toLocaleTimeString() + '] ' + msg + '\n';
+  el.scrollTop = el.scrollHeight;
+}
+
+function setStatus(connected) {
+  const el = document.getElementById('status');
+  el.textContent = connected ? 'подключено' : 'не подключено';
+  el.className = 'status ' + (connected ? 'on' : 'off');
+}
+
+function connect() {
+  const url = document.getElementById('wsUrl').value.trim();
+  const token = document.getElementById('token').value.trim();
+
+  if (!token) { log('ОШИБКА: вставь токен'); return; }
+
+  log('подключаюсь к ' + url);
+  const socket = new WebSocket(url);
+  client = Stomp.over(socket);
+  client.debug = function(m) { log('STOMP: ' + m); };
+
+  const headers = { 'Authorization': 'Bearer ' + token };
+
+  client.connect(headers, function(frame) {
+    setStatus(true);
+    log('CONNECTED, пользователь: ' + frame.headers['user-name']);
+
+    client.subscribe('/user/queue/messages', function(message) {
+      log('ВХОДЯЩЕЕ: ' + message.body);
+    });
+    log('подписка на /user/queue/messages');
+  }, function(error) {
+    setStatus(false);
+    log('ОШИБКА подключения: ' + error);
+  });
+}
+
+function disconnect() {
+  if (client) {
+    client.disconnect(function() {
+      setStatus(false);
+      log('отключено');
+    });
+  }
+}
+
+function send() {
+  if (!client || !client.connected) { log('ОШИБКА: сначала подключись'); return; }
+
+  const recipientId = document.getElementById('recipientId').value.trim();
+  const text = document.getElementById('text').value;
+
+  if (!recipientId) { log('ОШИБКА: заполни UUID получателя'); return; }
+
+  const payload = {
+    type: 'MESSAGE',
+    recipientId: recipientId,
+    data: {
+      messageText: text,
+      time: new Date().toISOString(),
+      readStatus: 'SENT'
+    }
+  };
+
+  client.send('/app/chat.sendMessage', {}, JSON.stringify(payload));
+  log('ОТПРАВЛЕНО: ' + text + ' → ' + recipientId);
+}
+</script>
+
+</body>
+</html>
