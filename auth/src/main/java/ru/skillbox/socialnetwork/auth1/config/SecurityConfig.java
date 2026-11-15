@@ -20,6 +20,7 @@ import org.springframework.security.web.SecurityFilterChain;
 
 public class SecurityConfig {
     //  private final JWTAuthFilter jwtAuthFilter;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
