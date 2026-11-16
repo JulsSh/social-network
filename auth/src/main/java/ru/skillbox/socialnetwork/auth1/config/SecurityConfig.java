@@ -19,15 +19,12 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 
 public class SecurityConfig {
-    //  private final JWTAuthFilter jwtAuthFilter;
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable);
         http.sessionManagement(s -> s.sessionCreationPolicy(
@@ -39,7 +36,6 @@ public class SecurityConfig {
         http.exceptionHandling(e -> e.authenticationEntryPoint(
                 (req, res, ex)
                         -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED)));
-        // http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }
