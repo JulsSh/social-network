@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.skillbox.socialnetwork.auth1.dto.AuthenticateRq;
 import ru.skillbox.socialnetwork.auth1.dto.RefreshRequest;
 import ru.skillbox.socialnetwork.auth1.dto.RegistrationDto;
 import ru.skillbox.socialnetwork.auth1.dto.TokenResponse;
@@ -25,9 +26,10 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+
     @Transactional
     public String registerNewUser(RegistrationDto registrationDto) {
-        if (!registrationDto.password1().equals(registrationDto.password2())){
+        if (!registrationDto.password1().equals(registrationDto.password2())) {
             throw new PasswordsDoNotMatchException();
         }
         if (userRepository.existsByEmail(registrationDto.email())) {
@@ -47,13 +49,24 @@ public class AuthService {
     }
 
     @Transactional(readOnly = true)
-    public TokenResponse refreshToken(RefreshRequest request){
-       if(!jwtService.isValid(request.refreshToken(), TokenType.REFRESH)){
-           throw new InvalidTokenException();
-       }
-      UUID userId = jwtService.extractUserId(request.refreshToken());
+    public TokenResponse refreshToken(RefreshRequest request) {
+        if (!jwtService.isValid(request.refreshToken(), TokenType.REFRESH)) {
+            throw new InvalidTokenException();
+        }
+        UUID userId = jwtService.extractUserId(request.refreshToken());
 
-       User myUser = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
-        return  new TokenResponse(jwtService.generateAccessToken(myUser), jwtService.generateRefreshToken(myUser));
+        User myUser = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+        return new TokenResponse(jwtService.generateAccessToken(myUser), jwtService.generateRefreshToken(myUser));
+    }
+
+    @Transactional
+    public TokenResponse login(AuthenticateRq authenticateRq) {
+        User foundUser = userRepository.findByEmail(authenticateRq.email())
+                .orElseThrow(UserNotFoundException::new);
+        if (!passwordEncoder.matches(authenticateRq.password(), foundUser.getPassword())) {
+            throw new UserNotFoundException();
+        }
+        return new TokenResponse(jwtService.generateAccessToken(foundUser),
+                jwtService.generateRefreshToken(foundUser));
     }
 }

@@ -54,7 +54,7 @@ public class JwtService {
         return Jwts.builder()
                 .subject(user.getId().toString())
                 .claim("role", user.getRole().name())
-                .claim("token_type", TokenType.ACCESS.name())
+                .claim("token_type", TokenType.REFRESH.name())
                 .issuedAt(Date.from(Instant.now()))
                 .expiration(Date.from(expiration))
                 .signWith(secretKey)
