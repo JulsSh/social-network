@@ -1,11 +1,13 @@
 package ru.skillbox.socialnetwork.auth1.service;
 
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import ru.skillbox.socialnetwork.auth1.dto.TokenResponse;
 import ru.skillbox.socialnetwork.auth1.entity.User;
 import ru.skillbox.socialnetwork.auth1.enums.TokenType;
 
@@ -57,5 +59,20 @@ public class JwtService {
                 .expiration(Date.from(expiration))
                 .signWith(secretKey)
                 .compact();
+    }
+
+    public boolean isValid(String token, TokenType tokenType){
+        try {
+            String result = Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .get("token_type", String.class);
+          return  result.equals(tokenType.name());
+
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
     }
 }

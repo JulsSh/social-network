@@ -2,7 +2,7 @@ package ru.skillbox.socialnetwork.auth1.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import ru.skillbox.socialnetwork.auth1.enums.Role;
+import ru.skillbox.socialnetwork.auth1.Role;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -30,7 +30,6 @@ public class User {
 
     @Column(name = "last_name", nullable = false, length = 255)
     private String lastName;
-
     private Instant createdAt;
     private Instant modifiedAt;
 
