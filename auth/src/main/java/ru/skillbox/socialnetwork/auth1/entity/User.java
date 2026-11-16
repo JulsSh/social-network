@@ -2,7 +2,7 @@ package ru.skillbox.socialnetwork.auth1.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import ru.skillbox.socialnetwork.auth1.Role;
+import ru.skillbox.socialnetwork.auth1.enums.Role;
 
 import java.time.Instant;
 import java.util.UUID;

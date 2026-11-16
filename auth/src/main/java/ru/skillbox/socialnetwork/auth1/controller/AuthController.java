@@ -7,7 +7,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.skillbox.socialnetwork.auth1.dto.RefreshRequest;
 import ru.skillbox.socialnetwork.auth1.dto.RegistrationDto;
+import ru.skillbox.socialnetwork.auth1.dto.TokenResponse;
 import ru.skillbox.socialnetwork.auth1.service.AuthService;
 
 @RestController
@@ -24,4 +26,11 @@ public class AuthController {
         return ResponseEntity.ok("ok");
     }
 
+    @PostMapping("/refresh")
+    public ResponseEntity<TokenResponse> refresh(
+            @Valid @RequestBody RefreshRequest request
+            ){
+      TokenResponse body = authService.refreshToken(request);
+        return ResponseEntity.ok(body);
+    }
 }

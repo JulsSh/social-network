@@ -7,7 +7,6 @@ import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import ru.skillbox.socialnetwork.auth1.dto.TokenResponse;
 import ru.skillbox.socialnetwork.auth1.entity.User;
 import ru.skillbox.socialnetwork.auth1.enums.TokenType;
 
@@ -15,14 +14,15 @@ import javax.crypto.SecretKey;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.UUID;
 
 @Service
 public class JwtService {
     @Value("${jwt.secret}")
-   private String jwtSecret;
+    private String jwtSecret;
 
     @Value("${jwt.expiration.access.token}")
-   private Long accessTokenExpirationMinutes;
+    private Long accessTokenExpirationMinutes;
 
     @Value("${jwt.expiration.refresh.token}")
     private Long refreshTokenExpirationDays;
@@ -35,7 +35,7 @@ public class JwtService {
         secretKey = Keys.hmacShaKeyFor(bytes);
     }
 
-    public String generateAccessToken(User user){
+    public String generateAccessToken(User user) {
         Instant expiration = Instant.now().plus(accessTokenExpirationMinutes, ChronoUnit.MINUTES);
 
         return Jwts.builder()
@@ -48,7 +48,7 @@ public class JwtService {
                 .compact();
     }
 
-    public String generateRefreshToken(User user){
+    public String generateRefreshToken(User user) {
         Instant expiration = Instant.now().plus(refreshTokenExpirationDays, ChronoUnit.DAYS);
 
         return Jwts.builder()
@@ -61,7 +61,7 @@ public class JwtService {
                 .compact();
     }
 
-    public boolean isValid(String token, TokenType tokenType){
+    public boolean isValid(String token, TokenType tokenType) {
         try {
             String result = Jwts.parser()
                     .verifyWith(secretKey)
@@ -69,10 +69,19 @@ public class JwtService {
                     .parseSignedClaims(token)
                     .getPayload()
                     .get("token_type", String.class);
-          return  result.equals(tokenType.name());
+            return result.equals(tokenType.name());
 
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
+    }
+
+    public UUID extractUserId(String token) {
+        String id = Jwts.parser().verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("sub", String.class);
+        return UUID.fromString(id);
     }
 }
