@@ -3,21 +3,21 @@ package ru.skillbox.socialnetwork.auth1.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.skillbox.socialnetwork.auth1.dto.AuthenticateRq;
 import ru.skillbox.socialnetwork.auth1.dto.RefreshRequest;
 import ru.skillbox.socialnetwork.auth1.dto.RegistrationDto;
 import ru.skillbox.socialnetwork.auth1.dto.TokenResponse;
+import ru.skillbox.socialnetwork.auth1.enums.TokenType;
 import ru.skillbox.socialnetwork.auth1.service.AuthService;
+import ru.skillbox.socialnetwork.auth1.service.JwtService;
 
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
+    private final JwtService jwtService;
 
     @PostMapping("/register")
     public ResponseEntity<String> register(
@@ -41,4 +41,10 @@ public class AuthController {
         TokenResponse body = authService.login(authenticateRq);
         return ResponseEntity.ok(body);
     }
+
+    @GetMapping("/validate")
+    public ResponseEntity<Boolean> validate(@RequestParam String token) {
+        return ResponseEntity.ok(jwtService.isValid(token, TokenType.ACCESS));
+    }
+
 }
