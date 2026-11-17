@@ -34,7 +34,7 @@ public class SecurityConfig {
                 SessionCreationPolicy.STATELESS));
         http.authorizeHttpRequests(a -> a
                 .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
-                .requestMatchers("/actuator/**", "/api/v1/auth/**")
+                .requestMatchers("/actuator/**", "/api/v1/auth/**", "/error")
                 .permitAll().anyRequest().authenticated());
         http.exceptionHandling(e -> e.authenticationEntryPoint(
                 (req, res, ex)
