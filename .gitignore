@@ -1,0 +1,13 @@
+# Сборка
+target/
+
+# IntelliJ
+.idea/
+*.iml
+
+# Секреты
+.env
+*.env.local
+
+# macOS
+.DS_Store
